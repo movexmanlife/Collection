@@ -1,4 +1,4 @@
-package org.zero.collection.ui;
+package org.zero.collection.util.zxing;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -25,11 +25,6 @@ import com.google.zxing.Result;
 import com.google.zxing.client.result.ResultParser;
 
 import org.zero.collection.R;
-import org.zero.collection.util.zxing.AmbientLightManager;
-import org.zero.collection.util.zxing.BeepManager;
-import org.zero.collection.util.zxing.FinishListener;
-import org.zero.collection.util.zxing.InactivityTimer;
-import org.zero.collection.util.zxing.IntentSource;
 import org.zero.collection.util.zxing.camera.CameraManager;
 import org.zero.collection.util.zxing.common.BitmapUtils;
 import org.zero.collection.util.zxing.decode.BitmapDecoder;
@@ -42,7 +37,8 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * 条形码和二维码扫描器
+ * 条形码和二维码扫描器(使用方法：启动本界面即可)
+ *
  * This activity opens the camera and does the actual scanning on a background
  * thread. It draws a viewfinder to help the user place the barcode correctly,
  * shows feedback as the image processing is happening, and then overlays the
@@ -50,14 +46,11 @@ import java.util.Map;
  * <p>
  * 此Activity所做的事： 1.开启camera，在后台独立线程中完成扫描任务；
  * 2.绘制了一个扫描区（viewfinder）来帮助用户将条码置于其中以准确扫描； 3.扫描成功后会将扫描结果展示在界面上。
- *
- * @author dswitkin@google.com (Daniel Switkin)
- * @author Sean Owen
  */
-public final class CodeScannerActivity extends Activity implements
+public final class DecodeActivity extends Activity implements
         SurfaceHolder.Callback, View.OnClickListener {
 
-    private static final String TAG = CodeScannerActivity.class.getSimpleName();
+    private static final String TAG = DecodeActivity.class.getSimpleName();
 
     private static final int REQUEST_CODE = 100;
 
@@ -169,7 +162,7 @@ public final class CodeScannerActivity extends Activity implements
 
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        setContentView(R.layout.activity_code_scanner);
+        setContentView(R.layout.activity_decode);
 
         hasSurface = false;
         inactivityTimer = new InactivityTimer(this);
@@ -179,8 +172,11 @@ public final class CodeScannerActivity extends Activity implements
         // 监听图片识别按钮
         findViewById(R.id.capture_scan_photo).setOnClickListener(this);
 
+        //监听闪光灯按钮
         findViewById(R.id.capture_flashlight).setOnClickListener(this);
 
+        //监听取消按钮
+        findViewById(R.id.capture_button_cancel).setOnClickListener(this);
     }
 
     @Override
@@ -323,7 +319,7 @@ public final class CodeScannerActivity extends Activity implements
                                     .getCompressedBitmap(photoPath);
 
                             BitmapDecoder decoder = new BitmapDecoder(
-                                    CodeScannerActivity.this);
+                                    DecodeActivity.this);
                             Result result = decoder.getRawResult(img);
 
                             if (result != null) {
@@ -508,6 +504,11 @@ public final class CodeScannerActivity extends Activity implements
                 } else {
                     cameraManager.setTorch(true); // 打开闪光灯
                     isFlashlightOpen = true;
+                }
+                break;
+            case R.id.capture_button_cancel:
+                if ((source == IntentSource.NONE) && lastResult != null) { // 重新进行扫描
+                    restartPreviewAfterDelay(0L);
                 }
                 break;
             default:

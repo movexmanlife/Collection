@@ -106,7 +106,7 @@ public final class ScannerView extends View {
         paint = new Paint(Paint.ANTI_ALIAS_FLAG); // 开启反锯齿
 
         Resources resources = getResources();
-        maskColor = Color.parseColor("#00000000");// 遮掩层颜色
+        maskColor = Color.parseColor("#60000000");// 遮掩层颜色
         resultColor = Color.parseColor("#b0000000");
 
         resultPointColor = Color.parseColor("#c0ffbd21");

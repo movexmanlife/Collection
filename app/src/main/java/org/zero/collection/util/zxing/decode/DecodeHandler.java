@@ -32,7 +32,7 @@ import com.google.zxing.Result;
 import com.google.zxing.common.HybridBinarizer;
 
 import org.zero.collection.R;
-import org.zero.collection.ui.CodeScannerActivity;
+import org.zero.collection.util.zxing.DecodeActivity;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Map;
@@ -42,13 +42,13 @@ final class DecodeHandler extends Handler {
 
 	private static final String TAG = DecodeHandler.class.getSimpleName();
 
-	private final CodeScannerActivity activity;
+	private final DecodeActivity activity;
 
 	private final MultiFormatReader multiFormatReader;
 
 	private boolean running = true;
 
-	DecodeHandler(CodeScannerActivity activity, Map<DecodeHintType, Object> hints) {
+	DecodeHandler(DecodeActivity activity, Map<DecodeHintType, Object> hints) {
 		multiFormatReader = new MultiFormatReader();
 		multiFormatReader.setHints(hints);
 		this.activity = activity;

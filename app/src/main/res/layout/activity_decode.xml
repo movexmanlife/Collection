@@ -4,7 +4,7 @@
     android:id="@+id/capture_frame"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    tools:context="org.zero.collection.ui.CodeScannerActivity">
+    tools:context=".util.zxing.DecodeActivity">
 
     <SurfaceView
         android:id="@+id/capture_preview_view"
@@ -88,16 +88,6 @@
             android:layout_marginLeft="20.0dip"
             android:text="取消"
             android:textSize="14.0sp" />
-
-        <Button
-            android:id="@+id/capture_button_createcode"
-            android:layout_width="70.0dip"
-            android:layout_height="40.0dip"
-            android:layout_gravity="center_vertical"
-            android:layout_marginLeft="20.0dip"
-            android:text="生成"
-            android:textSize="14.0sp"
-            android:visibility="gone" />
 
         <TextView
             android:id="@+id/capture_bottom_hint"

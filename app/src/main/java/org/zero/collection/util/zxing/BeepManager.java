@@ -33,9 +33,9 @@ import java.io.IOException;
 
 
 /**
- * Manages beeps and vibrations for {@link org.zero.collection.ui.CodeScannerActivity}.
+ * Manages beeps and vibrations for {@link DecodeActivity}.
  */
-public final class BeepManager implements MediaPlayer.OnCompletionListener,
+final class BeepManager implements MediaPlayer.OnCompletionListener,
         MediaPlayer.OnErrorListener {
 
     private static final String TAG = BeepManager.class.getSimpleName();
@@ -52,7 +52,7 @@ public final class BeepManager implements MediaPlayer.OnCompletionListener,
 
     private boolean vibrate;
 
-    public BeepManager(Activity activity) {
+    BeepManager(Activity activity) {
         this.activity = activity;
         this.mediaPlayer = null;
         updatePrefs();
@@ -61,7 +61,7 @@ public final class BeepManager implements MediaPlayer.OnCompletionListener,
     /**
      * 扫描成功后可以播放提示音并震动，这两种功能都是用户自定义的 在Barcode Scanner中点击菜单键，点设置即可看到这两项的设置
      */
-    public synchronized void updatePrefs() {
+    synchronized void updatePrefs() {
         SharedPreferences prefs = PreferenceManager
                 .getDefaultSharedPreferences(activity);
         playBeep = shouldBeep(prefs, activity);
@@ -78,7 +78,7 @@ public final class BeepManager implements MediaPlayer.OnCompletionListener,
     /**
      * 根据配置播放提示音和震动
      */
-    public synchronized void playBeepSoundAndVibrate() {
+    synchronized void playBeepSoundAndVibrate() {
         if (playBeep && mediaPlayer != null) {
             mediaPlayer.start();
         }

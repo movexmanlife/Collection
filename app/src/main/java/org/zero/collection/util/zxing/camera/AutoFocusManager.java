@@ -11,8 +11,7 @@ import org.zero.collection.util.zxing.config.Config;
 
 import java.util.ArrayList;
 import java.util.Collection;
-
-import org.zero.collection.util.zxing.common.Runnable;
+import java.util.concurrent.RejectedExecutionException;
 
 /**
  * 由于对焦不是一次性完成的任务（手抖），而系统提供的对焦仅有Camera.autoFocus()方法，
@@ -25,84 +24,96 @@ final class AutoFocusManager implements Camera.AutoFocusCallback {
 	private static final long AUTO_FOCUS_INTERVAL_MS = 2000L;
 	private static final Collection<String> FOCUS_MODES_CALLING_AF;
 	static {
-		FOCUS_MODES_CALLING_AF = new ArrayList<String>(2);
+		FOCUS_MODES_CALLING_AF = new ArrayList<>(2);
 		FOCUS_MODES_CALLING_AF.add(Camera.Parameters.FOCUS_MODE_AUTO);
 		FOCUS_MODES_CALLING_AF.add(Camera.Parameters.FOCUS_MODE_MACRO);
 	}
 
-	private boolean active;
+	private boolean stopped;
+	private boolean focusing;
 	private final boolean useAutoFocus;
 	private final Camera camera;
-	private AsyncTask<?, ?, ?> outstandingTask;
+	private AsyncTask<?,?,?> outstandingTask;
 
 	AutoFocusManager(Context context, Camera camera) {
 		this.camera = camera;
-		SharedPreferences sharedPrefs = PreferenceManager
-				.getDefaultSharedPreferences(context);
+		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
 		String currentFocusMode = camera.getParameters().getFocusMode();
-		useAutoFocus = sharedPrefs.getBoolean(Config.KEY_AUTO_FOCUS, true)
-				&& FOCUS_MODES_CALLING_AF.contains(currentFocusMode);
-		Log.i(TAG, "Current focus mode '" + currentFocusMode
-				+ "'; use auto focus? " + useAutoFocus);
+		useAutoFocus =
+				sharedPrefs.getBoolean(Config.KEY_AUTO_FOCUS, true) &&
+						FOCUS_MODES_CALLING_AF.contains(currentFocusMode);
+		Log.i(TAG, "Current focus mode '" + currentFocusMode + "'; use auto focus? " + useAutoFocus);
 		start();
 	}
 
 	@Override
 	public synchronized void onAutoFocus(boolean success, Camera theCamera) {
-		if (active) {
-			outstandingTask = new AutoFocusTask();
-			Runnable.execAsync(outstandingTask);
+		focusing = false;
+		autoFocusAgainLater();
+	}
+
+	private synchronized void autoFocusAgainLater() {
+		if (!stopped && outstandingTask == null) {
+			AutoFocusTask newTask = new AutoFocusTask();
+			try {
+				newTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+				outstandingTask = newTask;
+			} catch (RejectedExecutionException ree) {
+				Log.w(TAG, "Could not request auto focus", ree);
+			}
 		}
 	}
 
 	synchronized void start() {
 		if (useAutoFocus) {
-			active = true;
-			try {
-				camera.autoFocus(this);
+			outstandingTask = null;
+			if (!stopped && !focusing) {
+				try {
+					camera.autoFocus(this);
+					focusing = true;
+				} catch (RuntimeException re) {
+					// Have heard RuntimeException reported in Android 4.0.x+; continue?
+					Log.w(TAG, "Unexpected exception while focusing", re);
+					// Try again later to keep cycle going
+					autoFocusAgainLater();
+				}
 			}
-			catch (RuntimeException re) {
-				// Have heard RuntimeException reported in Android 4.0.x+;
-				// continue?
-				Log.w(TAG, "Unexpected exception while focusing", re);
+		}
+	}
+
+	private synchronized void cancelOutstandingTask() {
+		if (outstandingTask != null) {
+			if (outstandingTask.getStatus() != AsyncTask.Status.FINISHED) {
+				outstandingTask.cancel(true);
 			}
+			outstandingTask = null;
 		}
 	}
 
 	synchronized void stop() {
+		stopped = true;
 		if (useAutoFocus) {
+			cancelOutstandingTask();
+			// Doesn't hurt to call this even if not focusing
 			try {
 				camera.cancelAutoFocus();
-			}
-			catch (RuntimeException re) {
-				// Have heard RuntimeException reported in Android 4.0.x+;
-				// continue?
+			} catch (RuntimeException re) {
+				// Have heard RuntimeException reported in Android 4.0.x+; continue?
 				Log.w(TAG, "Unexpected exception while cancelling focusing", re);
 			}
 		}
-		if (outstandingTask != null) {
-			outstandingTask.cancel(true);
-			outstandingTask = null;
-		}
-		active = false;
 	}
 
-	private final class AutoFocusTask extends AsyncTask<Object, Object, Object> {
+	private final class AutoFocusTask extends AsyncTask<Object,Object,Object> {
 		@Override
 		protected Object doInBackground(Object... voids) {
 			try {
 				Thread.sleep(AUTO_FOCUS_INTERVAL_MS);
-			}
-			catch (InterruptedException e) {
+			} catch (InterruptedException e) {
 				// continue
 			}
-			synchronized (AutoFocusManager.this) {
-				if (active) {
-					start();
-				}
-			}
+			start();
 			return null;
 		}
 	}
-
 }

@@ -26,7 +26,7 @@ import com.google.zxing.BarcodeFormat;
 import com.google.zxing.DecodeHintType;
 import com.google.zxing.ResultPointCallback;
 
-import org.zero.collection.ui.CodeScannerActivity;
+import org.zero.collection.util.zxing.DecodeActivity;
 import org.zero.collection.util.zxing.config.Config;
 
 import java.util.Collection;
@@ -47,7 +47,7 @@ final class DecodeThread extends Thread {
 
 	public static final String BARCODE_SCALED_FACTOR = "barcode_scaled_factor";
 
-	private final CodeScannerActivity activity;
+	private final DecodeActivity activity;
 
 	private final Map<DecodeHintType, Object> hints;
 
@@ -55,7 +55,7 @@ final class DecodeThread extends Thread {
 
 	private final CountDownLatch handlerInitLatch;
 
-	DecodeThread(CodeScannerActivity activity,
+	DecodeThread(DecodeActivity activity,
 				 Collection<BarcodeFormat> decodeFormats,
 				 Map<DecodeHintType, ?> baseHints, String characterSet,
 				 ResultPointCallback resultPointCallback) {

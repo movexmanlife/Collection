@@ -35,7 +35,7 @@ import com.google.zxing.DecodeHintType;
 import com.google.zxing.Result;
 
 import org.zero.collection.R;
-import org.zero.collection.ui.CodeScannerActivity;
+import org.zero.collection.util.zxing.DecodeActivity;
 import org.zero.collection.util.zxing.camera.CameraManager;
 import org.zero.collection.util.zxing.view.ViewfinderResultPointCallback;
 
@@ -54,7 +54,7 @@ public final class CaptureActivityHandler extends Handler {
 	private static final String TAG = CaptureActivityHandler.class
 			.getSimpleName();
 
-	private final CodeScannerActivity activity;
+	private final DecodeActivity activity;
 
 	/**
 	 * 真正负责扫描任务的核心线程
@@ -83,7 +83,7 @@ public final class CaptureActivityHandler extends Handler {
 		DONE
 	}
 
-	public CaptureActivityHandler(CodeScannerActivity activity,
+	public CaptureActivityHandler(DecodeActivity activity,
 								  Collection<BarcodeFormat> decodeFormats,
 								  Map<DecodeHintType, ?> baseHints, String characterSet,
 								  CameraManager cameraManager) {
